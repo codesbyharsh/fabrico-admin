@@ -1,38 +1,34 @@
-import 'dotenv/config';
 import express from 'express';
-import mongoose from 'mongoose';
-import authRoutes from './routes/auth.js';
-import adminRoutes from './routes/admin.js';
 import cors from 'cors';
+import 'dotenv/config';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// DB Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('MongoDB Connected');
-    initializeAdmin(); // Create admin if not exists
-  })
-  .catch(err => console.log('DB Connection Error:', err));
 
-// Initialize Admin
-const initializeAdmin = async () => {
-  const Admin = (await import('./models/Admin.js')).default;
-  const exists = await Admin.findOne({ email: process.env.ADMIN_EMAIL });
-  if (!exists) {
-    await Admin.create({
-      email: process.env.ADMIN_EMAIL,
-      password: process.env.ADMIN_PASSWORD
-    });
-    console.log('Default admin created');
+const resetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3 // Limit each IP to 3 reset attempts per window
+});
+
+app.use('/api/auth/reset-password', resetLimiter);
+
+// Mock login endpoint
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: "Invalid credentials" });
   }
-};
+});
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+// Mock logout
+app.post('/api/auth/logout', (req, res) => {
+  res.json({ success: true });
+});
 
 app.listen(process.env.PORT, () => 
   console.log(`Server running on port ${process.env.PORT}`)
