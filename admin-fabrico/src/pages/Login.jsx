@@ -3,17 +3,26 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
+    
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      if (res.data.success) navigate('/dashboard');
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        { email, password }
+      );
+      
+      if (res.data.success) {
+        navigate('/dashboard');
+      }
     } catch (err) {
-      alert('Invalid credentials');
+      setError(err.response?.data?.error || 'Login failed');
     }
   };
 
@@ -21,11 +30,13 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow-md w-80">
         <h1 className="text-2xl font-bold mb-6">Admin Login</h1>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 mb-4 border rounded"
+          placeholder="Admin Email"
           required
         />
         <input
@@ -33,6 +44,7 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 mb-4 border rounded"
+          placeholder="Password"
           required
         />
         <button
