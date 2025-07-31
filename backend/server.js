@@ -1,35 +1,45 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import rateLimit from 'express-rate-limit';
+import mongoose from 'mongoose';
+import authRoutes from './routes/auth.js';
+ import Admin from './models/Admin.js';
+// import bcrypt from 'bcryptjs';
+
+
 
 const app = express();
+
+// creating admin
+// const createAdmin = async () => {
+//   await Admin.create({
+//     email: 'admin@fabrico.com',
+//     password: 'Harsh123',
+//     isVerified: true
+//   });
+//   console.log('Admin user created');
+// };
+// createAdmin();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Database Connection
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
 
-const resetLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 3 // Limit each IP to 3 reset attempts per window
+// Routes
+app.use('/api/auth', authRoutes);
+
+// Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
-app.use('/api/auth/reset-password', resetLimiter);
-
-// Mock login endpoint
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: "Invalid credentials" });
-  }
-});
-
-// Mock logout
-app.post('/api/auth/logout', (req, res) => {
-  res.json({ success: true });
-});
-
-app.listen(process.env.PORT, () => 
-  console.log(`Server running on port ${process.env.PORT}`)
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => 
+  console.log(`Server running on port ${PORT}`)
 );

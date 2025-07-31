@@ -8,11 +8,8 @@ const adminSchema = new mongoose.Schema({
     unique: true,
     match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ 
   },
-  password: { type: String, required: true },
-  isVerified: { type: Boolean, default: false },
-  verificationToken: String,
-  resetPasswordToken: String,
-  resetPasswordExpires: Date
+  password: { type: String, required: true }, // Now stores plain text
+  isVerified: { type: Boolean, default: true }
 }, { timestamps: true });
 
 // Password hashing before save
