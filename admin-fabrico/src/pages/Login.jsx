@@ -3,31 +3,37 @@ import { Eye, EyeOff } from 'react-feather';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@fabrico.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
+    
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
       
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
       localStorage.setItem('token', data.token);
+      localStorage.setItem('isAuthenticated', 'true');
       navigate('/dashboard');
+      
     } catch (err) {
       setError(err.message);
+      setPassword('');
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow">
@@ -50,7 +56,7 @@ export default function Login() {
               required
             />
           </div>
-
+          
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <div className="relative">
@@ -70,7 +76,7 @@ export default function Login() {
               </button>
             </div>
           </div>
-
+          
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
@@ -80,8 +86,8 @@ export default function Login() {
         </form>
 
         <div className="mt-4 text-center">
-          <Link 
-            to="/forgot-password" 
+          <Link
+            to="/forgot-password"
             className="text-blue-600 hover:underline text-sm"
           >
             Forgot Password?
