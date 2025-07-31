@@ -6,27 +6,27 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
+    setIsLoading(true);
 
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
         { email }
       );
-
-      if (response.data.success) {
-        setMessage(response.data.message);
-        setEmail('');
-      } else {
-        setError(response.data.error || 'Failed to process request');
-      }
+      
+      setMessage(response.data.message);
+      setEmail('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to process request');
+      setError(err.response?.data?.error || 'Failed to process request. Please try again later.');
       console.error('Forgot password error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -61,12 +61,13 @@ export default function ForgotPassword() {
           
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            disabled={isLoading}
+            className={`w-full py-2 rounded ${isLoading ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
           >
-            Send Reset Link
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>
-
+        
         <div className="mt-4 text-center">
           <Link to="/" className="text-blue-600 hover:underline text-sm">
             Back to Login

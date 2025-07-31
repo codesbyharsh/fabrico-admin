@@ -1,144 +1,120 @@
-// routes/auth.js
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin.js';
-import Token from '../models/Token.js';
-import { sendPasswordResetEmail } from '../utils/emailService.js';
-import PasswordReset from '../models/PasswordReset.js';
-
+import { sendPasswordResetEmail } from '../utils/emailSender.js';
 
 const router = express.Router();
-
-// Login endpoint
+// Fixed Login Endpoint
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     // 1. Find admin by email
     const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // 2. Compare passwords using the model method
-    const isMatch = await admin.comparePassword(password);
-    if (!isMatch) {
+    // 2. Compare passwords directly
+    if (admin.password !== password) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // 3. Create JWT token
     const token = jwt.sign(
-      { id: admin._id, tokenVersion: admin.tokenVersion },
+      { id: admin._id, email: admin.email },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // 4. Send response without password
     res.json({
       token,
       admin: {
         id: admin._id,
-        email: admin.email,
-        isVerified: admin.isVerified
+        email: admin.email
       }
     });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Forgot Password (generate new password)
-
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const admin = await Admin.findOne({ email });
     
+    // 1. Always return the same message for security
+    const responseMessage = 'If this email exists in our system, you will receive a password reset email shortly.';
+    
+    // 2. Find admin (but don't reveal if they exist or not)
+    const admin = await Admin.findOne({ email });
     if (!admin) {
-      return res.json({ 
-        message: 'If this email exists, a reset request has been logged' 
-      });
+      return res.json({ success: true, message: responseMessage });
     }
 
-    // Generate secure password
-    const newPassword = generateSecurePassword();
+    // 3. Generate and set new password
+    const newPassword = Math.random().toString(36).slice(-8);
     admin.password = newPassword;
     await admin.save();
 
-    // Log the reset in your database
-    await PasswordReset.create({
-      email,
-      newPassword,
-      ip: req.ip,
-      userAgent: req.headers['user-agent']
-    });
-
-    // Attempt to send email via Web3Forms
-    const emailSent = await sendPasswordResetEmail(email, newPassword);
-    
-    if (!emailSent) {
-      console.error(`Password reset for ${email} - Web3Forms failed`);
-      // Still respond successfully since password was changed
-      return res.json({ 
-        message: 'Password reset processed. Contact admin for new password.' 
-      });
+    // 4. Attempt to send email (but don't fail the request if email fails)
+    try {
+      await sendPasswordResetEmail(email, newPassword);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
     }
 
-    res.json({ 
-      message: 'Password reset processed. Check with admin for new password.' 
-    });
+    return res.json({ success: true, message: responseMessage });
+    
   } catch (err) {
-    console.error('Forgot password error:', err);
-    res.status(500).json({ 
-      error: 'Password reset process failed' 
+    console.error('Server error in forgot-password:', err);
+    return res.status(500).json({ 
+      success: false,
+      error: 'An error occurred. Please try again later.' 
     });
   }
 });
 
 function generateSecurePassword() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 10; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
 
-// Update Email Route
+// Update Email
 router.post('/update-email', async (req, res) => {
   try {
     const { newEmail, currentPassword } = req.body;
     const token = req.headers.authorization?.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
     const admin = await Admin.findById(decoded.id);
+
     if (!admin) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    // Verify current password
     const isMatch = await admin.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    // Check if email already exists
     const emailExists = await Admin.findOne({ email: newEmail });
     if (emailExists) {
       return res.status(400).json({ error: 'Email already in use' });
     }
 
-    // Update email
     admin.email = newEmail;
     await admin.save();
-
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // Update Password
 router.post('/update-password', async (req, res) => {
@@ -146,22 +122,19 @@ router.post('/update-password', async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const token = req.headers.authorization?.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
     const admin = await Admin.findById(decoded.id);
+
     if (!admin) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    // Verify current password
     const isMatch = await admin.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    // Update password
     admin.password = newPassword;
     await admin.save();
-
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -171,12 +144,10 @@ router.post('/update-password', async (req, res) => {
 // Logout
 router.post('/logout', async (req, res) => {
   try {
-    // In a real app, you might want to invalidate the token
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 export default router;
