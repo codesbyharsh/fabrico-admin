@@ -1,22 +1,24 @@
+// models/Admin.js
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 const adminSchema = new mongoose.Schema({
-  email: { 
-    type: String, 
-    required: true, 
+  email: {
+    type: String,
+    required: true,
     unique: true,
-    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ 
+    match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   },
-  password: { type: String, required: true }, // Now stores plain text
-  isVerified: { type: Boolean, default: true }
+  password: { type: String, required: true }, // Storing plain text password
+  isVerified: { type: Boolean, default: true },
+  tokenVersion: { type: Number, default: 0 }
 }, { timestamps: true });
 
-// Password hashing before save
-adminSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  this.password = await bcrypt.hash(this.password, 12);
-  next();
-});
+// Removed bcrypt pre-save hook
 
-export default mongoose.model('Admin', adminSchema);
+// Simplified password comparison (direct string comparison)
+adminSchema.methods.comparePassword = function(candidatePassword) {
+  return this.password === candidatePassword;
+};
+
+const Admin = mongoose.model('Admin', adminSchema);
+export default Admin;
