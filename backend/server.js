@@ -51,19 +51,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.get('/test-email', async (req, res) => {
-  try {
-    const success = await sendPasswordResetEmail(
-      process.env.EMAIL_USER, // Send to yourself
-      'test123' // Test password
-    );
-    
-    res.send(success ? 'Email sent successfully' : 'Failed to send email');
-  } catch (error) {
-    console.error('Test email error:', error);
-    res.status(500).send('Email test failed');
-  }
-});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
