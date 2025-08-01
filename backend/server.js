@@ -53,6 +53,12 @@ cloudinary.config({
 
 // // Error handling middleware
 app.use((err, req, res, next) => {
+   if (err.name === 'TimeoutError') {
+    return res.status(504).json({ 
+      error: 'Upload timeout - please try again with smaller files' 
+    });
+  }
+  next(err);
   console.error('Server error:', {
     message: err.message,
     stack: err.stack,

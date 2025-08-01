@@ -3,6 +3,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
+import ProductForm from './components/ProductForm';
+import ProductList from './components/ProductList';
 
 export default function App() {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -19,6 +21,8 @@ export default function App() {
         element={isAuthenticated ? <Profile /> : <Navigate to="/" />}
       />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/product-form" element={<ProductForm />} />
+      <Route path="/products" element={<ProductList />} />
     </Routes>
   );
 }
