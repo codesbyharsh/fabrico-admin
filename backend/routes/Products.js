@@ -93,16 +93,9 @@ router.put('/:id', upload.array('images'), async (req, res) => {
   try {
     const { name, price, category, subCategory, sizes } = req.body;
     const colors = Array.isArray(req.body.colors) ? req.body.colors : [req.body.colors];
-  const quantities = Array.isArray(req.body.quantities)
-  ? req.body.quantities.map(q => {
-      if (q === '' || q === null || q === undefined) return 0;
-      const num = parseInt(q, 10);
-      return isNaN(num) ? 0 : num;
-    })
-  : [req.body.quantities === '' || req.body.quantities === null || req.body.quantities === undefined 
-      ? 0 
-      : parseInt(req.body.quantities, 10)]; 
-    const existingImages = Array.isArray(req.body.existingImages) ? 
+    const quantities = Array.isArray(req.body.quantities)
+  ? req.body.quantities.map(q => q === '' ? 0 : parseInt(q, 10))
+  : [req.body.quantities === '' ? 0 : parseInt(req.body.quantities, 10)];    const existingImages = Array.isArray(req.body.existingImages) ? 
       req.body.existingImages : [req.body.existingImages].filter(Boolean);
 
     // Find existing product
@@ -240,14 +233,8 @@ router.post('/', upload.array('images'), async (req, res) => {
       ? req.body.colors 
       : [req.body.colors];
   const quantities = Array.isArray(req.body.quantities)
-  ? req.body.quantities.map(q => {
-      if (q === '' || q === null || q === undefined) return 0;
-      const num = parseInt(q, 10);
-      return isNaN(num) ? 0 : num;
-    })
-  : [req.body.quantities === '' || req.body.quantities === null || req.body.quantities === undefined 
-      ? 0 
-      : parseInt(req.body.quantities, 10)];
+  ? req.body.quantities.map(q => q === '' ? 0 : parseInt(q, 10))
+  : [req.body.quantities === '' ? 0 : parseInt(req.body.quantities, 10)];
     // Group images by color
     const colorGroups = {};
     req.files.forEach((file, index) => {
@@ -299,6 +286,47 @@ router.post('/', upload.array('images'), async (req, res) => {
   }
 });
 
+// Add this new route to your Products.js routes file
+router.get('/stats', async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments();
+    const outOfStock = await Product.countDocuments({
+      'variants.quantity': { $lte: 0 }
+    });
+    
+    const categories = await Product.aggregate([
+      { $group: { _id: '$category', count: { $sum: 1 } } }
+    ]);
+    
+    // Get recent activity (last 3 updated products)
+    const recentActivity = await Product.find()
+      .sort({ updatedAt: -1 })
+      .limit(3)
+      .select('name updatedAt variants.color variants.quantity');
+    
+    const categoryStats = {};
+    categories.forEach(cat => {
+      categoryStats[cat._id] = cat.count;
+    });
+
+    res.json({
+      totalProducts,
+      outOfStock,
+      categories: categoryStats,
+      recentActivity: recentActivity.map(product => ({
+        name: product.name,
+        updatedAt: product.updatedAt,
+        colors: product.variants.map(v => v.color).join(', '),
+        stock: product.variants.reduce((sum, v) => sum + v.quantity, 0)
+      }))
+    });
+    
+  } catch (err) {
+    console.error('[STATS ERROR]', err);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
+  }
+});
+
 router.get('/', async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
@@ -308,4 +336,4 @@ router.get('/', async (req, res) => {
   }
 });
 
-export default router;
+export default router; 

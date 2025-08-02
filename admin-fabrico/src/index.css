@@ -8,3 +8,8 @@ button, input, a {
 html {
   scroll-behavior: smooth;
 }
+
+/* Hide the default file input appearance */
+input[type="file"]::file-selector-button {
+  display: none;
+}
