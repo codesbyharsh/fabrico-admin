@@ -146,6 +146,15 @@ export default function ProductList() {
             <div className="flex-1">
               <h2 className="text-xl font-semibold">{products[0].name}</h2>
               <p className="text-gray-600">₹{products[0].price}</p>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    products[0].codAvailable 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {products[0].codAvailable ? 'COD Available' : 'COD Not Available'}
+                  </span>
+                </div>
               <p className="text-gray-500">Category: {products[0].category} | Sub: {products[0].subCategory}</p>
               <div className="mt-2">
                 <p className="text-sm font-medium">Colors:</p>
