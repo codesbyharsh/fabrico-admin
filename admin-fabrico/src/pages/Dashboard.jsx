@@ -5,6 +5,8 @@ import UpdateCredentials from '../components/UpdateCredentials';
 import ProductForm from '../components/ProductForm';
 import ProductList from '../components/ProductList';
 import AnalyticsCard from '../components/AnalyticsCard';
+import PincodeForm from '../components/PincodeForm';
+import PincodeList from '../components/PincodeList';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -14,6 +16,17 @@ export default function Dashboard() {
     outOfStock: 0,
     categories: {}
   });
+   const [pincodes, setPincodes] = useState([]);
+
+
+
+  useEffect(() => {
+  if (activeTab === 'dashboard') {
+    axios.get(`${import.meta.env.VITE_API_URL}/api/pincodes`)
+      .then(res => setPincodes(res.data))
+      .catch(console.error);
+  }
+}, [activeTab]);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -114,6 +127,24 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="md:ml-64 p-4 md:p-6">
+       {activeTab === 'pincodes' && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-800">Pincode Management</h2>
+              <div className="bg-white rounded-xl shadow p-6">
+                <PincodeForm
+                  onSaved={() => axios.get(`${import.meta.env.VITE_API_URL}/api/pincodes`).then(r => setPincodes(r.data))}
+                />
+              </div>
+              <div className="bg-white rounded-xl shadow p-6">
+                <PincodeList
+                  pincodes={pincodes}
+                  onDeleted={(id) => {
+                    setPincodes(p => p.filter(x => x._id !== id));
+                  }}
+                />
+              </div>
+            </div>
+          )}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-800">Dashboard Overview</h2>
@@ -143,6 +174,25 @@ export default function Dashboard() {
               />
             </div>
 
+              <div className="bg-white rounded-xl shadow p-6">
+      <h3 className="text-lg font-semibold mb-4">Pincode Management</h3>
+      <PincodeForm
+        onSaved={() => {
+          axios.get(`${import.meta.env.VITE_API_URL}/api/pincodes`)
+            .then(res => setPincodes(res.data))
+            .catch(console.error);
+        }}
+      />
+      <div className="mt-6">
+        <PincodeList
+          pincodes={pincodes}
+          onDeleted={(id) => {
+            setPincodes(p => p.filter(x => x._id !== id));
+          }}
+        />
+      </div>
+    </div>
+
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
@@ -154,10 +204,7 @@ export default function Dashboard() {
                   <span className="text-2xl mb-2">➕</span>
                   <span>Add Product</span>
                 </button>
-                <button className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition flex flex-col items-center">
-                  <span className="text-2xl mb-2">📊</span>
-                  <span>View Reports</span>
-                </button>
+
                 <button className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition flex flex-col items-center">
                   <span className="text-2xl mb-2">📦</span>
                   <span>Inventory</span>
@@ -261,14 +308,7 @@ export default function Dashboard() {
               <h3 className="text-xl font-semibold mb-4">System Preferences</h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Dark Mode</p>
-                    <p className="text-sm text-gray-500">Switch between light and dark theme</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
+                 
                 </div>
                 <div className="flex items-center justify-between">
                   <div>

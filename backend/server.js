@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import productRoutes from './routes/Products.js';
 import { v2 as cloudinary } from 'cloudinary';
+import pincodeRoutes from './routes/PincodeRoutes.js';
+
 
 // Load environment variables
 dotenv.config();
@@ -21,28 +23,26 @@ const app = express();
 //   console.log('Admin user created');
 // };
 // createAdmin();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 
- // Database connection
+// Database connection
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('MongoDB connected');
-
-    // Start server only after DB is connected
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
-    process.exit(1); // exit app if DB fails
+    process.exit(1);
   });
 
-// // Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/pincodes', pincodeRoutes);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -50,15 +50,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-// // Error handling middleware
+// Error handling middleware
 app.use((err, req, res, next) => {
-   if (err.name === 'TimeoutError') {
+  if (err.name === 'TimeoutError') {
     return res.status(504).json({ 
       error: 'Upload timeout - please try again with smaller files' 
     });
   }
-  next(err);
   console.error('Server error:', {
     message: err.message,
     stack: err.stack,
@@ -73,4 +71,3 @@ app.use((err, req, res, next) => {
     ...(process.env.NODE_ENV === 'development' && { details: err.message })
   });
 });
-
