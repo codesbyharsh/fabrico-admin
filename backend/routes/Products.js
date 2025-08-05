@@ -91,9 +91,11 @@ router.delete('/:id', async (req, res) => {
 // Add this PUT route for updating products
 router.put('/:id', upload.array('images'), async (req, res) => {
   try {
+    const codAvailable = req.body.codAvailable === 'true'; 
     const { name, price, category, subCategory, sizes } = req.body;
     const colors = Array.isArray(req.body.colors) ? req.body.colors : [req.body.colors];
     const quantities = Array.isArray(req.body.quantities)
+    
   ? req.body.quantities.map(q => q === '' ? 0 : parseInt(q, 10))
   : [req.body.quantities === '' ? 0 : parseInt(req.body.quantities, 10)];    const existingImages = Array.isArray(req.body.existingImages) ? 
       req.body.existingImages : [req.body.existingImages].filter(Boolean);
@@ -103,6 +105,8 @@ router.put('/:id', upload.array('images'), async (req, res) => {
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
+
+     product.codAvailable = codAvailable;
 
     // Group new images by color
     const colorGroups = {};
@@ -228,6 +232,7 @@ router.patch('/:id/variants', async (req, res) => {
 
 router.post('/', upload.array('images'), async (req, res) => {
   try {
+      const codAvailable = req.body.codAvailable === 'true';
     const { name, price, category, subCategory, sizes } = req.body;
     const colors = Array.isArray(req.body.colors) 
       ? req.body.colors 
@@ -269,14 +274,17 @@ router.post('/', upload.array('images'), async (req, res) => {
     }
 
     // Create new product
-    const newProduct = new Product({
-      name,
-      price,
-      category,
-      subCategory,
-      sizes: sizes.split(',').map(s => s.trim()),
-      variants
-    });
+const newProduct = new Product({
+  name,
+  price,
+  codAvailable,
+  codAvailable: req.body.codAvailable === 'true', // Convert string to boolean
+  category,
+  subCategory,
+  sizes: sizes.split(',').map(s => s.trim()),
+  variants
+});
+
 
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);

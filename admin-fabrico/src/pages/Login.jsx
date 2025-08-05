@@ -9,30 +9,34 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError('');
 
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('isAuthenticated', 'true');
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Login failed');
+
+    // ✅ Check if email matched
+    if (data?.admin?.email === email) {
       navigate('/dashboard');
-      
-    } catch (err) {
-      setError(err.message);
-      setPassword('');
+    } else {
+      throw new Error('Invalid login response');
     }
-  };
+
+  } catch (err) {
+    setError(err.message);
+    setPassword('');
+  }
+};
+
   
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

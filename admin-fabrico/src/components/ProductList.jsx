@@ -7,7 +7,6 @@ export default function ProductList() {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [selectedVariantIndices, setSelectedVariantIndices] = useState({});
-  const [editingProduct, setEditingProduct] = useState(null);
   const navigate = useNavigate();
 
   const fetchProducts = async () => {
@@ -15,10 +14,9 @@ export default function ProductList() {
       setLoading(true);
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
       setProducts(res.data);
-      // Initialize selected variant indices
       const indices = {};
-      res.data.forEach((product, i) => {
-        indices[product._id] = 0; // Default to first variant
+      res.data.forEach((product) => {
+        indices[product._id] = 0;
       });
       setSelectedVariantIndices(indices);
     } catch (err) {
@@ -57,7 +55,6 @@ export default function ProductList() {
         response: err.response?.data,
         config: err.config
       });
-      
       alert(`Delete failed: ${err.response?.data?.error || err.message || 'Server error'}`);
       fetchProducts();
     } finally {
@@ -84,7 +81,7 @@ export default function ProductList() {
       );
 
       if (response.data.success) {
-        fetchProducts(); // Refresh the list
+        fetchProducts();
         alert('Color variant deleted successfully');
       } else {
         throw new Error(response.data.error || 'Failed to delete variant');
@@ -98,7 +95,7 @@ export default function ProductList() {
   };
 
   const handleEdit = (product) => {
-        navigate('/product-form', { state: { product } });
+    navigate('/product-form', { state: { product } });
   };
 
   const handleVariantSelect = (productId, index) => {
@@ -146,15 +143,18 @@ export default function ProductList() {
             <div className="flex-1">
               <h2 className="text-xl font-semibold">{products[0].name}</h2>
               <p className="text-gray-600">₹{products[0].price}</p>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    products[0].codAvailable 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {products[0].codAvailable ? 'COD Available' : 'COD Not Available'}
-                  </span>
-                </div>
+              
+              {/* COD Badge */}
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  products[0].codAvailable 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {products[0].codAvailable ? 'COD Available' : 'COD Not Available'}
+                </span>
+              </div>
+
               <p className="text-gray-500">Category: {products[0].category} | Sub: {products[0].subCategory}</p>
               <div className="mt-2">
                 <p className="text-sm font-medium">Colors:</p>
@@ -202,15 +202,15 @@ export default function ProductList() {
 
           {/* Grid for other products */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.slice(1).map((p) => (
+            {products.slice(1).map((product) => (
               <div
-                key={p._id}
+                key={product._id}
                 className="bg-white shadow rounded-lg overflow-hidden flex flex-col h-[420px]"
               >
-                {p.variants[selectedVariantIndices[p._id] || 0]?.images[0] ? (
+                {product.variants[selectedVariantIndices[product._id] || 0]?.images[0] ? (
                   <img
-                    src={p.variants[selectedVariantIndices[p._id] || 0].images[0]}
-                    alt={p.name}
+                    src={product.variants[selectedVariantIndices[product._id] || 0].images[0]}
+                    alt={product.name}
                     className="w-full h-[180px] object-cover"
                   />
                 ) : (
@@ -220,17 +220,29 @@ export default function ProductList() {
                 )}
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold">{p.name}</h3>
-                    <p className="text-gray-600">₹{p.price}</p>
-                    <p className="text-gray-500 text-sm">Category: {p.category} | Sub: {p.subCategory}</p>
+                    <h3 className="text-lg font-semibold">{product.name}</h3>
+                    <p className="text-gray-600">₹{product.price}</p>
+                    
+                    {/* COD Badge for grid items */}
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        product.codAvailable 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.codAvailable ? 'COD Available' : 'COD Not Available'}
+                      </span>
+                    </div>
+                    
+                    <p className="text-gray-500 text-sm">Category: {product.category} | Sub: {product.subCategory}</p>
                     <div className="mt-2">
                       <p className="text-xs font-medium">Colors:</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {p.variants.map((variant, i) => (
+                        {product.variants.map((variant, i) => (
                           <div key={i} className="flex items-center">
                             <button
-                              onClick={() => handleVariantSelect(p._id, i)}
-                              className={`flex items-center p-1 rounded ${(selectedVariantIndices[p._id] || 0) === i ? 'bg-gray-200' : ''}`}
+                              onClick={() => handleVariantSelect(product._id, i)}
+                              className={`flex items-center p-1 rounded ${(selectedVariantIndices[product._id] || 0) === i ? 'bg-gray-200' : ''}`}
                             >
                               <span 
                                 className="w-3 h-3 rounded-full border"
@@ -239,9 +251,9 @@ export default function ProductList() {
                               <span className="ml-1 text-xs">{variant.color}</span>
                             </button>
                             <button
-                              onClick={() => deleteVariant(p._id, i)}
+                              onClick={() => deleteVariant(product._id, i)}
                               className="ml-1 text-red-500 hover:text-red-700 text-xs"
-                              disabled={deletingId === p._id}
+                              disabled={deletingId === product._id}
                             >
                               ×
                             </button>
@@ -252,17 +264,17 @@ export default function ProductList() {
                   </div>
                   <div className="flex gap-2 mt-4">
                     <button
-                      onClick={() => handleEdit(p)}
+                      onClick={() => handleEdit(product)}
                       className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex-1"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => deleteProduct(p._id)}
+                      onClick={() => deleteProduct(product._id)}
                       className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 flex-1"
-                      disabled={deletingId === p._id}
+                      disabled={deletingId === product._id}
                     >
-                      {deletingId === p._id ? 'Deleting...' : 'Delete'}
+                      {deletingId === product._id ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
@@ -274,7 +286,3 @@ export default function ProductList() {
     </div>
   );
 }
-
-
-
-

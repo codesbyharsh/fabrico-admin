@@ -151,7 +151,7 @@ const handleVariantChange = (index, field, value) => {
       formData.append('category', category);
       formData.append('subCategory', subCategory);
       formData.append('sizes', selectedSizes.join(','));
-       formData.append('codAvailable', codAvailable);
+      formData.append('codAvailable', codAvailable);
 
       // For edit mode, include the product ID
       if (isEditMode) {
