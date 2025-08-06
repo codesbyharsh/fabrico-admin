@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'react-feather';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,41 +9,40 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setAdmin }                = useAuth();
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
+ const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
 
-  try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        }
+      );
+      const data = await res.json();
 
-    const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
 
-    if (!res.ok) throw new Error(data.error || 'Login failed');
-
-    // ✅ Check if email matched
-    if (data?.admin?.email === email) {
+      // ✅ mark as logged in
+   setAdmin(data.admin);
       navigate('/dashboard');
-    } else {
-      throw new Error('Invalid login response');
+    } catch (err) {
+      setError(err.message);
+      setPassword('');
     }
-
-  } catch (err) {
-    setError(err.message);
-    setPassword('');
-  }
-};
+  };
 
   
-  return (
+   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white p-8 rounded-lg shadow">
         <h1 className="text-2xl font-bold text-center mb-6">Admin Login</h1>
-        
+
         {error && (
           <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
             {error}
@@ -60,12 +60,12 @@ const handleLogin = async (e) => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-2 border rounded pr-10"
@@ -80,7 +80,7 @@ const handleLogin = async (e) => {
               </button>
             </div>
           </div>
-          
+
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
@@ -90,10 +90,7 @@ const handleLogin = async (e) => {
         </form>
 
         <div className="mt-4 text-center">
-          <Link
-            to="/forgot-password"
-            className="text-blue-600 hover:underline text-sm"
-          >
+          <Link to="/forgot-password" className="text-blue-600 hover:underline text-sm">
             Forgot Password?
           </Link>
         </div>

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff, Mail, Lock } from 'react-feather';
+import { useAuth } from '../context/AuthContext';
 
 export default function UpdateCredentials() {
+  const { admin, setAdmin } = useAuth();
   // Email Update State
   const [newEmail, setNewEmail] = useState('');
   const [emailPassword, setEmailPassword] = useState('');
@@ -26,15 +28,14 @@ export default function UpdateCredentials() {
     setEmailMessage('');
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/update-email`,
-        { newEmail, currentPassword: emailPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/auth/update-email`,
+        { email: admin.email, newEmail, currentPassword: emailPassword }
+    );
       setEmailMessage('Email updated successfully');
       setNewEmail('');
       setEmailPassword('');
+       setAdmin({ ...admin, email: newEmail });
     } catch (err) {
       setEmailError(err.response?.data?.error || 'Failed to update email');
     }
@@ -51,12 +52,10 @@ export default function UpdateCredentials() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/update-password`,
-        { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/auth/update-password`,
+       { email: admin.email, currentPassword, newPassword }
+    );
       setPasswordMessage('Password updated successfully');
       setCurrentPassword('');
       setNewPassword('');
