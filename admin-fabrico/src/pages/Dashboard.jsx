@@ -51,8 +51,7 @@ export default function Dashboard() {
   const handleLogout = async () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/logout`);
-      localStorage.removeItem('token');
-      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('admin');
       navigate('/');
     } catch (err) {
       console.error('Logout error:', err);
