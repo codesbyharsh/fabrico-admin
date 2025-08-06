@@ -191,7 +191,7 @@ export default function ProductList() {
       </div>
 
       {/* Refresh Button */}
-      {/* <div className="flex justify-end">
+      <div className="flex justify-end">
         <button
           onClick={fetchProducts}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -199,7 +199,7 @@ export default function ProductList() {
         >
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
-      </div> */}
+      </div>
 
       {/* No Products Found */}
       {products.length === 0 && !loading && (

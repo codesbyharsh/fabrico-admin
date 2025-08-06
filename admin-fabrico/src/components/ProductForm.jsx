@@ -18,6 +18,17 @@ export default function ProductForm() {
   const [error, setError] = useState(null);
   const [codAvailable, setCodAvailable] = useState(true);
 
+  const resetForm = () => {
+  setName('');
+  setPrice('');
+  setCategory('');
+  setSubCategory('');
+  setSelectedSizes([]);
+  setVariants([{ file: null, color: '', quantity: 0 }]);
+  setCodAvailable(true);
+};
+
+
   // Color suggestions
   const colorSuggestions = [
     'Red', 'Blue', 'Green', 'Black', 'White', 'Yellow', 
@@ -195,8 +206,15 @@ const handleVariantChange = (index, field, value) => {
         }
       );
 
-      alert(isEditMode ? 'Product updated successfully' : 'Product added successfully');
-      navigate('/dashboard');
+alert(isEditMode ? 'Product updated successfully' : 'Product added successfully');
+
+if (!isEditMode) {
+  resetForm(); // Reset only after adding new product
+    navigate('/dashboard'); 
+} else {
+  navigate('/dashboard'); // Navigate only in edit mode
+}
+
 
     } catch (err) {
       console.error('Product submission error:', err);
