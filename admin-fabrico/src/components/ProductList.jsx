@@ -8,12 +8,30 @@ export default function ProductList() {
   const [deletingId, setDeletingId] = useState(null);
   const [selectedVariantIndices, setSelectedVariantIndices] = useState({});
   const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [subCategoryFilter, setSubCategoryFilter] = useState('');
 
-  const fetchProducts = async () => {
+    const subCategories = {
+    Men: ['T-shirt', 'Pant', 'Shirt', 'Sport', 'Banyan', 'Hoodies', 'Tracks', 'Cargo'],
+    Women: ['Saree', 'Punjabi', 'Dress', 'Lehnga', 'Kurti', 'T-shirt', 'Pant'],
+    Kids: ['T-shirt', 'Pant']
+  };
+
+ const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/products`);
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('search', searchTerm);
+      if (categoryFilter) params.append('category', categoryFilter);
+      if (subCategoryFilter) params.append('subCategory', subCategoryFilter);
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`
+      );
+      
       setProducts(res.data);
+      
       const indices = {};
       res.data.forEach((product) => {
         indices[product._id] = 0;
@@ -105,16 +123,75 @@ export default function ProductList() {
     }));
   };
 
-  useEffect(() => {
+ useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [searchTerm, categoryFilter, subCategoryFilter]);
 
-  if (!products.length && !loading) return <p className="text-center text-gray-500 mt-10">No products available</p>;
-
+  // Reset subcategory filter when category changes
+  useEffect(() => {
+    setSubCategoryFilter('');
+  }, [categoryFilter]);
+  
   return (
     <div className="mt-6 space-y-6">
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="flex justify-center py-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+        </div>
+      )}
+
+ {/* Filter Section */}
+      <div className="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4 items-center">
+        <div className="flex-1">
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+        
+        <div className="flex gap-2 flex-wrap">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">All Categories</option>
+            {Object.keys(subCategories).map(category => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </select>
+          
+          <select
+            value={subCategoryFilter}
+            onChange={(e) => setSubCategoryFilter(e.target.value)}
+            disabled={!categoryFilter}
+            className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+          >
+            <option value="">All Subcategories</option>
+            {categoryFilter && subCategories[categoryFilter].map(subCat => (
+              <option key={subCat} value={subCat}>{subCat}</option>
+            ))}
+          </select>
+          
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setCategoryFilter('');
+              setSubCategoryFilter('');
+            }}
+            className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
       {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* <div className="flex justify-end">
         <button
           onClick={fetchProducts}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
@@ -122,10 +199,28 @@ export default function ProductList() {
         >
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>
-      </div>
+      </div> */}
+
+      {/* No Products Found */}
+      {products.length === 0 && !loading && (
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <p className="text-gray-500 text-lg">No products found matching your filters</p>
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setCategoryFilter('');
+              setSubCategoryFilter('');
+            }}
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Clear Filters
+          </button>
+        </div>
+      )}
+
 
       {/* Product List */}
-      {products.length > 0 && (
+       {products.length > 0 && (
         <>
           {/* First full-width card */}
           <div className="bg-white shadow rounded-lg p-6 flex flex-col sm:flex-row gap-4 items-center h-[220px]">

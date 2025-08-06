@@ -14,7 +14,7 @@ router.post('/login', async (req, res) => {
     const admin = await Admin.findOne({ email });
     if (!admin) {
       console.log(`[LOGIN FAILED] Admin not found`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Admin not found' });
     }
 
     if (!admin.isVerified) {
@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
 
     if (admin.password !== password) {
       console.log(`[LOGIN FAILED] Wrong password`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Wrong password' });
     }
 
     console.log(`[LOGIN SUCCESS] ${admin.email}`);

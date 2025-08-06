@@ -337,9 +337,25 @@ router.get('/stats', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { search, category, subCategory } = req.query;
+    let query = {};
+
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
+    }
+
+if (category) {
+  query.category = { $regex: new RegExp(`^${category}$`, 'i') };
+}
+
+if (subCategory) {
+  query.subCategory = { $regex: new RegExp(`^${subCategory}$`, 'i') };
+}
+
+    const products = await Product.find(query).sort({ createdAt: -1 });
     res.json(products);
   } catch (err) {
+    console.error('Error fetching products:', err);
     res.status(500).json({ error: err.message });
   }
 });
