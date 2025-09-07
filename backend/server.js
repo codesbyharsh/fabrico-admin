@@ -6,8 +6,8 @@ import authRoutes from './routes/auth.js';
 import productRoutes from './routes/Products.js';
 import { v2 as cloudinary } from 'cloudinary';
 import pincodeRoutes from './routes/PincodeRoutes.js';
-
-
+import orderRoutes from './routes/orders.js'
+import User from './models/User.js';
 // Load environment variables
 dotenv.config();
 
@@ -24,7 +24,13 @@ const app = express();
 // };
 // createAdmin();
 // Middleware
-app.use(cors());
+// app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', // Your Vite frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Database connection
@@ -43,6 +49,7 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/pincodes', pincodeRoutes);
+app.use('/api/orders', orderRoutes);
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

@@ -6,13 +6,13 @@ import Profile from './pages/Profile';
 import ProductForm from './components/ProductForm';
 import ProductList from './components/ProductList';
 import { useAuth }    from './context/AuthContext';
+import Orders from './components/Orders';
 
 export default function App() {
  const { admin }       = useAuth();
  const isAuthenticated = Boolean(admin);  return (
     <Routes>
       <Route path="/" element={<Login />} />
-
       <Route
         path="/dashboard"
         element={
@@ -36,6 +36,8 @@ export default function App() {
       {/* If you want ProductForm/ProductList protected, wrap them similarly */}
       <Route path="/product-form" element={isAuthenticated ? <ProductForm /> : <Navigate to="/" replace />} />
       <Route path="/products"     element={isAuthenticated ? <ProductList /> : <Navigate to="/" replace />} />
+      <Route path="/orders"     element={isAuthenticated ? <Orders /> : <Navigate to="/" replace />} />
+  
     </Routes>
   );
 }

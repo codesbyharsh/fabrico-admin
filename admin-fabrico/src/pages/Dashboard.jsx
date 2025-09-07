@@ -7,6 +7,7 @@ import ProductList from '../components/ProductList';
 import AnalyticsCard from '../components/AnalyticsCard';
 import PincodeForm from '../components/PincodeForm';
 import PincodeList from '../components/PincodeList';
+import Orders from '../components/Orders'
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -84,6 +85,20 @@ export default function Dashboard() {
             </svg>
             Products
           </button>
+
+          <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex items-center w-full p-3 rounded-lg transition ${
+            activeTab === 'orders' ? 'bg-indigo-600' : 'hover:bg-indigo-600'
+          }`}
+        >
+          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M9 17v-6h13v6M9 3v4H3V3h6zm0 8v6H3v-6h6z" />
+          </svg>
+          Orders
+        </button>
+
           <button
             onClick={() => setActiveTab('settings')}
             className={`flex items-center w-full p-3 rounded-lg transition ${activeTab === 'settings' ? 'bg-indigo-600' : 'hover:bg-indigo-600'}`}
@@ -126,6 +141,12 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <main className="md:ml-64 p-4 md:p-6">
+        {activeTab === 'orders' && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <Orders />
+          </div>
+        )}
+
        {activeTab === 'pincodes' && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-gray-800">Pincode Management</h2>
